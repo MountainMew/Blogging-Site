@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Blog Service
+  blog-service:
+    build:
+      context: ./blog-service
+      dockerfile: Dockerfile
+    ports:
+      - '8081:8080'
+    environment:
+      - MONGO_URI=mongodb://rootuser:rootpass@mongodb:27017
+      - MONGO_DB=blog_db
+      - MONGO_USER=rootuser
+      - MONGO_PASS=rootpass
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USER=my_test_user
+      - PG_PASSWORD=my_secret_test_password
+      - PG_DB=my_test_db
+      - AUTH_URI=auth-service:9001
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+      - '8080:9001'
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=my_test_user
+      - DB_PASSWORD=my_secret_test_password
+      - DB_NAME=my_test_db
+      - JWT_SECRET=test_secret
+      - DEFAULT_USER_USERNAME=test_admin
+      - DEFAULT_USER_PASS=test_pass
+      - DEFAULT_USER_EMAIL=test@email.com 
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:13-alpine
+    environment:
+      - POSTGRES_USER=my_test_user
+      - POSTGRES_PASSWORD=my_secret_test_password
+      - POSTGRES_DB=my_test_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U my_test_user -d my_test_db"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:latest
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=rootuser
+      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand({ping: 1})", ">", "/dev/null"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+volumes:
+  mongodb_data:

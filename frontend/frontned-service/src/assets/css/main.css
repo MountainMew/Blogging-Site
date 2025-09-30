@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@400;700&display=swap');
+
+body {
+  font-family: 'Azeret Mono', monospace;
+  margin: 0;
+  padding: 0;
+}
+
+input,
+button,
+textarea,
+select {
+  font-family: 'Azeret Mono', monospace;
+}
